@@ -9,6 +9,7 @@ import {
     getPedidos,
     getLanches,
     createSessao,
+    updateSessao,
     deleteSessao,
     createPedido,
     updateLancheEstoque
@@ -41,6 +42,7 @@ const SessoesManager = () => {
 
     // Estado para armazenar os lanches disponíveis no banco de dados
     const [lanchesDisponiveis, setLanchesDisponiveis] = useState<LancheCombo[]>([]);
+    const [editingSessaoId, setEditingSessaoId] = useState<string | null>(null);
 
     // Carrinho / Pedido Atual
     const [sessaoSelecionada, setSessaoSelecionada] = useState<Sessao | null>(null);
@@ -55,7 +57,7 @@ const SessoesManager = () => {
     const [selectedLancheId, setSelectedLancheId] = useState("");
     const [qtdeLanche, setQtdeLanche] = useState(1);
 
-    const { register, handleSubmit, setError, formState: { errors } } = useForm<SessaoSchema>({
+    const { register, handleSubmit, reset, setError, formState: { errors } } = useForm<SessaoSchema>({
         resolver: zodResolver(sessaoSchema)
     });
 
@@ -108,9 +110,32 @@ const SessoesManager = () => {
             }
         }
 
-        await createSessao(data);
-        alert("Sessão agendada!");
+        if (editingSessaoId) {
+            await updateSessao(editingSessaoId, data);
+            alert("Sessão atualizada!");
+            setEditingSessaoId(null);
+        } else {
+            await createSessao(data);
+            alert("Sessão agendada!");
+        }
+        reset();
         loadData();
+    };
+
+    const handleEditSessao = (sessao: Sessao) => {
+        setEditingSessaoId(sessao.id!);
+        // formatar para datetime-local YYYY-MM-DDThh:mm
+        const formattedDate = new Date(sessao.dataHora).toISOString().slice(0, 16);
+        reset({
+            filmeId: String(sessao.filmeId),
+            salaId: String(sessao.salaId),
+            dataHora: formattedDate
+        });
+    };
+
+    const cancelEditSessao = () => {
+        setEditingSessaoId(null);
+        reset({ filmeId: "", salaId: "", dataHora: "" });
     };
 
     // --- Lógica de Assentos ---
@@ -297,7 +322,16 @@ const SessoesManager = () => {
                             <input type="datetime-local" {...register('dataHora')} className="form-control" />
                             <div className="text-danger small">{errors.dataHora?.message}</div>
                         </div>
-                        <button type="submit" className="btn btn-primary w-100">Agendar</button>
+                        <div className="d-flex gap-2 mt-3">
+                            <button type="submit" className="btn btn-primary w-100">
+                                {editingSessaoId ? 'Atualizar' : 'Agendar'}
+                            </button>
+                            {editingSessaoId && (
+                                <button type="button" className="btn btn-secondary w-100" onClick={cancelEditSessao}>
+                                    Cancelar
+                                </button>
+                            )}
+                        </div>
                     </form>
                 </div>
             </div>
@@ -332,10 +366,13 @@ const SessoesManager = () => {
                                         setLanchesCarrinho([]);
                                         setConfigPrecoInteira(20);
                                         setConfigPrecoMeia(10);
-                                    }}>
-                                        <i className="bi bi-cart"></i> Vender
+                                    }} title="Vender Ingressos">
+                                        <i className="bi bi-cart"></i>
                                     </button>
-                                    <button className="btn btn-sm btn-danger" onClick={() => removerSessao(s.id)}>
+                                    <button className="btn btn-sm btn-warning me-2" onClick={() => handleEditSessao(s)} title="Editar Sessão">
+                                        <i className="bi bi-pencil"></i>
+                                    </button>
+                                    <button className="btn btn-sm btn-danger" onClick={() => removerSessao(s.id)} title="Remover Sessão">
                                         <i className="bi bi-trash"></i>
                                     </button>
                                 </td>

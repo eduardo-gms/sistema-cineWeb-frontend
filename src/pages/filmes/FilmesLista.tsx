@@ -40,6 +40,9 @@ const FilmesLista = () => {
                 <p className="card-text"><small className="text-muted">
                   Exibição: {new Date(filme.dataInicioExibicao).toLocaleDateString()} até {new Date(filme.dataFinalExibicao).toLocaleDateString()}
                 </small></p>
+                <Link to={`/filmes/editar/${filme.id}`} className="btn btn-warning btn-sm me-2">
+                  <i className="bi bi-pencil"></i> Editar
+                </Link>
                 <button onClick={() => deletarFilme(filme.id)} className="btn btn-danger btn-sm">
                   <i className="bi bi-trash"></i> Excluir
                 </button>

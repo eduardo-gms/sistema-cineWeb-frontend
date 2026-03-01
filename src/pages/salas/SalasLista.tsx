@@ -55,6 +55,9 @@ const SalasLista = () => {
                   <td className="align-middle fw-bold">Sala {sala.numero}</td>
                   <td className="align-middle">{sala.capacidade} lugares</td>
                   <td className="text-end">
+                    <Link to={`/salas/editar/${sala.id}`} className="btn btn-warning btn-sm me-2" title="Editar Sala">
+                      <i className="bi bi-pencil"></i> Editar
+                    </Link>
                     <button
                       onClick={() => deletarSala(sala.id)}
                       className="btn btn-danger btn-sm"

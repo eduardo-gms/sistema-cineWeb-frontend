@@ -1,8 +1,9 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createFilme } from '../../services/api';
-import { useNavigate } from 'react-router-dom';
+import { createFilme, getFilmeById, updateFilme } from '../../services/api';
+import { useNavigate, useParams } from 'react-router-dom';
 
 // Schema atualizado conforme Diagrama de Classes
 const filmeSchema = z.object({
@@ -23,23 +24,47 @@ type FilmeSchema = z.infer<typeof filmeSchema>;
 
 const FilmesForm = () => {
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors } } = useForm<FilmeSchema>({
+  const { id } = useParams();
+  const isEditing = !!id;
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<FilmeSchema>({
     resolver: zodResolver(filmeSchema)
   });
 
+  useEffect(() => {
+    if (isEditing) {
+      getFilmeById(id).then(response => {
+        const dataForm = {
+          ...response.data,
+          dataInicioExibicao: response.data.dataInicioExibicao.split('T')[0],
+          dataFinalExibicao: response.data.dataFinalExibicao.split('T')[0]
+        };
+        reset(dataForm);
+      }).catch(error => {
+        console.error("Erro ao carregar filme para edição", error);
+        alert("Erro ao carregar o filme.");
+      });
+    }
+  }, [id, isEditing, reset]);
+
   const onSubmit = async (data: FilmeSchema) => {
     try {
-      await createFilme(data);
-      alert('Filme cadastrado com sucesso!');
+      if (isEditing) {
+        await updateFilme(id, data);
+        alert('Filme atualizado com sucesso!');
+      } else {
+        await createFilme(data);
+        alert('Filme cadastrado com sucesso!');
+      }
       navigate('/filmes');
     } catch {
-      alert("Erro ao cadastrar.");
+      alert("Erro ao salvar o filme.");
     }
   };
 
   return (
     <div className="card p-4">
-      <h3>Cadastro de Filme</h3>
+      <h3>{isEditing ? 'Editar Filme' : 'Cadastro de Filme'}</h3>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-3">
           <label className="form-label">Título</label>
@@ -109,7 +134,7 @@ const FilmesForm = () => {
           </div>
         </div>
 
-        <button type="submit" className="btn btn-primary w-100">Salvar Filme</button>
+        <button type="submit" className="btn btn-primary w-100">{isEditing ? 'Atualizar Filme' : 'Salvar Filme'}</button>
       </form>
     </div>
   );

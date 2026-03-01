@@ -1,12 +1,12 @@
 {
   "filmes": [
     {
-      "titulo": "fdasfsdf",
+      "titulo": "batata",
       "sinopse": "13213213123132",
       "duracao": 93,
       "classificacao": "16",
       "genero": "Ação",
-      "elenco": "sdfsdfsdf",
+      "elenco": "Rambo",
       "dataInicioExibicao": "2025-12-19",
       "dataFinalExibicao": "2025-12-25",
       "id": 1

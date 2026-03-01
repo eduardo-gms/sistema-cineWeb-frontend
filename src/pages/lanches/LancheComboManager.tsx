@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { getLanches, createLanche, deleteLanche } from '../../services/api';
+import { getLanches, createLanche, updateLanche, deleteLanche } from '../../services/api';
 import type { LancheCombo } from '../../types';
 
 // Schema validado
@@ -20,6 +20,7 @@ type LancheComboForm = z.infer<typeof lancheComboSchema>;
 
 const LancheCombosManager = () => {
   const [lanches, setLanches] = useState<LancheCombo[]>([]);
+  const [editingId, setEditingId] = useState<number | string | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<LancheComboForm>({
     resolver: zodResolver(lancheComboSchema)
@@ -38,20 +39,40 @@ const LancheCombosManager = () => {
 
   const onSubmit = async (data: LancheComboForm) => {
     try {
-      const novoLanche: Omit<LancheCombo, 'id'> = {
+      const payload: Omit<LancheCombo, 'id'> = {
         ...data,
-        quantidade: 0, // Inicia zero no carrinho
+        quantidade: 0,
         subTotal: 0
-        // O campo 'estoque' já vem dentro de 'data'
       };
 
-      await createLanche(novoLanche);
-      alert("Lanche/Combo cadastrado com sucesso!");
+      if (editingId) {
+        await updateLanche(editingId, payload);
+        alert("Lanche/Combo atualizado com sucesso!");
+        setEditingId(null);
+      } else {
+        await createLanche(payload);
+        alert("Lanche/Combo cadastrado com sucesso!");
+      }
       reset();
       carregarLanches();
     } catch (error) {
       alert("Erro ao salvar.");
     }
+  };
+
+  const handleEdit = (lanche: LancheCombo) => {
+    setEditingId(lanche.id!);
+    reset({
+      nome: lanche.nome,
+      descricao: lanche.descricao,
+      valorUnitario: lanche.valorUnitario,
+      estoque: lanche.estoque
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    reset({ nome: "", descricao: "", valorUnitario: 0, estoque: 0 });
   };
 
   const deletarLanche = async (id: string) => {
@@ -69,7 +90,7 @@ const LancheCombosManager = () => {
         {/* Formulário de Cadastro */}
         <div className="col-md-4">
           <div className="card p-3 mb-4 bg-light shadow-sm">
-            <h5 className="card-title mb-3">Novo Item</h5>
+            <h5 className="card-title mb-3">{editingId ? 'Editar Item' : 'Novo Item'}</h5>
             <form onSubmit={handleSubmit(onSubmit)}>
 
               <div className="mb-3">
@@ -116,9 +137,16 @@ const LancheCombosManager = () => {
                 <div className="invalid-feedback">{errors.estoque?.message}</div>
               </div>
 
-              <button type="submit" className="btn btn-primary w-100">
-                <i className="bi bi-save me-2"></i> Cadastrar
-              </button>
+              <div className="d-flex gap-2">
+                <button type="submit" className="btn btn-primary w-100">
+                  <i className="bi bi-save me-2"></i> {editingId ? 'Atualizar' : 'Cadastrar'}
+                </button>
+                {editingId && (
+                  <button type="button" className="btn btn-secondary w-100" onClick={cancelEdit}>
+                    Cancelar
+                  </button>
+                )}
+              </div>
             </form>
           </div>
         </div>
@@ -150,7 +178,14 @@ const LancheCombosManager = () => {
                     </td>
                     <td className="text-end">
                       <button
-                        onClick={() => item.id && deletarLanche(item.id)}
+                        onClick={() => handleEdit(item)}
+                        className="btn btn-warning btn-sm me-2"
+                        title="Editar Item"
+                      >
+                        <i className="bi bi-pencil"></i>
+                      </button>
+                      <button
+                        onClick={() => item.id && deletarLanche(String(item.id))}
                         className="btn btn-danger btn-sm"
                         title="Remover Item"
                       >
