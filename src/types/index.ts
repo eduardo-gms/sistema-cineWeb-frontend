@@ -1,13 +1,20 @@
+export interface Genero {
+    id: string;
+    nome: string;
+}
+
 export interface Filme {
     id: string;
     titulo: string;
-    sinopse: string;
-    classificacao: string;
     duracao: number;
-    genero: string;
+    sinopse: string;
     elenco: string;
+    generoId: string;
+    classificacaoEtaria: string;
     dataInicioExibicao: string;
-    dataFinalExibicao: string;
+    dataFimExibicao: string;
+    status: string;
+    genero?: Genero;
 }
 
 export interface Sala {
@@ -20,35 +27,50 @@ export interface Sessao {
     id: string;
     filmeId: string;
     salaId: string;
-    dataHora: string;
+    data: string;
+    horario: string;
+    valorIngresso: number;
     filme?: Filme;
     sala?: Sala;
 }
 
-export interface Ingresso { 
-    sessaoId: string;
-    tipo: 'INTEIRA' | 'MEIA'; 
-    poltrona: { fila: number; numero: number }; 
-    valorUnitario: number;   
-    sessao?: Sessao;
+export interface LancheCombo {
+    id: string;
+    nome: string;
+    descricao: string;
+    valorUnitario: number;
+    estoque: number;
 }
 
-export interface LancheCombo {
-    id?: string; 
-    nome: string; 
-    descricao?: string; 
-    valorUnitario: number; 
+export interface IngressoItem {
+    sessaoId: string;
+    tipo: 'Inteira' | 'Meia';
+    poltrona: string;
+}
+
+export interface LancheItem {
+    lancheComboId: string;
     quantidade: number;
-    estoque: number;    
-    subTotal: number; 
 }
 
 export interface Pedido {
-    id: string;
-    qtInteira: number; 
-    qtMeia: number;    
-    itensIngresso: Ingresso[];
-    itensLanche: LancheCombo[];
-    valorTotal: number;
-    dataPedido: string; 
+    id?: string;
+    valorTotal?: number;
+    qtdInteira?: number;
+    qtdMeia?: number;
+    dataHora?: string;
+    ingressos?: IngressoItem[];
+    lanches?: LancheItem[];
 }
+
+// Interfaces auxiliares para manipulação de Front-end (ex: Carrinho)
+export interface LancheComboCarrinho extends LancheCombo {
+    quantidade: number;
+    subTotal: number;
+}
+
+export interface IngressoCarrinho extends IngressoItem {
+    valorUnitario: number;
+    fila: number;
+    numero: number;
+}

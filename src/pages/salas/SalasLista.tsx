@@ -5,13 +5,17 @@ import { Link } from 'react-router-dom';
 
 const SalasLista = () => {
   const [salas, setSalas] = useState<Sala[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const carregarSalas = async () => {
     try {
+      setLoading(true);
       const response = await getSalas();
       setSalas(response.data);
     } catch (error) {
       console.error("Erro ao carregar salas", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -27,6 +31,8 @@ const SalasLista = () => {
       }
     }
   };
+
+  if (loading) return <div className="text-center mt-5"><div className="spinner-border" role="status"></div></div>;
 
   return (
     <div>
