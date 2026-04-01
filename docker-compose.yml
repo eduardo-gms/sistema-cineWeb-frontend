@@ -5,17 +5,13 @@ services:
     build: .
     ports:
       - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    networks:
+      - cineweb-network
     volumes:
       - ./src:/app/src
-    depends_on:
-      - backend
 
-  backend:
-    image: node:20-alpine
-    working_dir: /data
-    # AQUI ESTÁ A MUDANÇA: adicionamos @0.17.4
-    command: npx json-server@0.17.4 --watch db.json --port 3000 --host 0.0.0.0
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./server:/data
+networks:
+  cineweb-network:
+    external: true
