@@ -73,4 +73,72 @@ export interface IngressoCarrinho extends IngressoItem {
     valorUnitario: number;
     fila: number;
     numero: number;
-}
+}
+
+// ========================
+// Autenticação
+// ========================
+
+export interface Usuario {
+    id: string;
+    nome: string;
+    email: string;
+    perfil: 'ADMIN' | 'CUSTOMER';
+}
+
+export interface AuthResponse {
+    accessToken: string;
+    refreshToken: string;
+    user: Usuario;
+}
+
+export interface TokenRefreshResponse {
+    accessToken: string;
+    refreshToken: string;
+}
+
+// ========================
+// Comprovante
+// ========================
+
+export interface ComprovanteIngresso {
+    id: string;
+    filme: string;
+    genero?: string;
+    classificacao: string;
+    duracao: string;
+    sala: string;
+    data: string;
+    horario: string;
+    poltrona: string;
+    tipo: string;
+    valor: number;
+    valorFormatado: string;
+    qrCodeData: string;
+}
+
+export interface ComprovanteLanche {
+    nome: string;
+    quantidade: number;
+    precoUnitario: number;
+    subtotal: number;
+    subtotalFormatado: string;
+}
+
+export interface ComprovanteResumo {
+    qtdInteira: number;
+    qtdMeia: number;
+    totalIngressos: number;
+    totalLanches: number;
+    valorTotal: number;
+    valorTotalFormatado: string;
+}
+
+export interface Comprovante {
+    pedidoId: string;
+    dataCompra: string;
+    cliente: { nome: string; email: string } | null;
+    ingressos: ComprovanteIngresso[];
+    lanches: ComprovanteLanche[];
+    resumo: ComprovanteResumo;
+}
