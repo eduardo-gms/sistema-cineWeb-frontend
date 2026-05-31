@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,6 +24,7 @@ import {
     type IngressoCarrinho,
     type LancheComboCarrinho
 } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 
 const sessaoSchema = z.object({
     filmeId: z.string().min(1, "Selecione um filme"),
@@ -35,6 +37,13 @@ const sessaoSchema = z.object({
 type SessaoSchema = z.infer<typeof sessaoSchema>;
 
 const SessoesManager = () => {
+    const { user, isAuthenticated } = useAuth();
+    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const filterFilmeId = searchParams.get('filmeId');
+
+
+
     // Dados Gerais
     const [filmes, setFilmes] = useState<Filme[]>([]);
     const [salas, setSalas] = useState<Sala[]>([]);
@@ -58,18 +67,18 @@ const SessoesManager = () => {
 
     const loadData = async () => {
         try {
-            const [f, s, sess, ped, lanchesResp] = await Promise.all([
+            const results = await Promise.allSettled([
                 getFilmes(),
                 getSalas(),
                 getSessoes(),
                 getPedidos(),
                 getLanches()
             ]);
-            setFilmes(f.data);
-            setSalas(s.data);
-            setSessoes(sess.data);
-            setPedidosRealizados(ped.data);
-            setLanchesDisponiveis(lanchesResp.data);
+            if (results[0].status === 'fulfilled') setFilmes(results[0].value.data);
+            if (results[1].status === 'fulfilled') setSalas(results[1].value.data);
+            if (results[2].status === 'fulfilled') setSessoes(results[2].value.data);
+            if (results[3].status === 'fulfilled') setPedidosRealizados(results[3].value.data);
+            if (results[4].status === 'fulfilled') setLanchesDisponiveis(results[4].value.data);
         } catch (error) {
             console.error("Erro ao carregar dados", error);
         }
@@ -78,6 +87,7 @@ const SessoesManager = () => {
     useEffect(() => { loadData(); }, []);
 
     const removerSessao = async (id: string) => {
+        if (!isAuthenticated) { navigate('/login'); return; }
         if (confirm("Deseja cancelar esta sessão?")) {
             await deleteSessao(id);
             loadData();
@@ -85,6 +95,7 @@ const SessoesManager = () => {
     };
 
     const onSubmit = async (data: SessaoSchema) => {
+        if (!isAuthenticated) { navigate('/login'); return; }
         const filmeSelecionado = filmes.find(f => String(f.id) === String(data.filmeId));
 
         if (filmeSelecionado) {
@@ -126,6 +137,7 @@ const SessoesManager = () => {
     };
 
     const handleEditSessao = (sessao: Sessao) => {
+        if (!isAuthenticated) { navigate('/login'); return; }
         setEditingSessaoId(sessao.id!);
         reset({
             filmeId: String(sessao.filmeId),
@@ -240,6 +252,7 @@ const SessoesManager = () => {
     const totalGeral = totalIngressosValor + totalLanchesValor;
 
     const finalizarVenda = async () => {
+        if (!isAuthenticated) { navigate('/login'); return; }
         if (ingressosCarrinho.length === 0 && lanchesCarrinho.length === 0) return;
 
         const qtInteira = ingressosCarrinho.filter(i => i.tipo === 'Inteira').length;
@@ -260,14 +273,19 @@ const SessoesManager = () => {
         };
 
         try {
-            await createPedido(pedido);
+            const res = await createPedido(pedido);
 
             alert("Venda realizada com sucesso!");
             setSessaoSelecionada(null);
             setIngressosCarrinho([]);
             setLanchesCarrinho([]);
 
-            loadData();
+            // Redireciona diretamente para o comprovante recém gerado
+            if (res.data && res.data.id) {
+                navigate(`/pedidos/${res.data.id}/comprovante`);
+            } else {
+                loadData();
+            }
 
         } catch (error: any) {
             console.error(error);
@@ -275,61 +293,72 @@ const SessoesManager = () => {
         }
     };
 
+    const sessoesExibidas = filterFilmeId ? sessoes.filter(s => String(s.filmeId) === filterFilmeId) : sessoes;
+
     return (
         <div className="row">
-            <div className="col-md-4 mb-4">
-                <div className="card p-3 shadow-sm bg-light">
-                    <h5>Agendar Sessão</h5>
-                    <form onSubmit={handleSubmit(onSubmit)}>
-                        <div className="mb-2">
-                            <label>Filme</label>
-                            <select {...register('filmeId')} className="form-select">
-                                <option value="">Selecione...</option>
-                                {filmes.map(f => <option key={f.id} value={f.id}>{f.titulo}</option>)}
-                            </select>
-                            <div className="text-danger small">{errors.filmeId?.message}</div>
-                        </div>
-                        <div className="mb-2">
-                            <label>Sala</label>
-                            <select {...register('salaId')} className="form-select">
-                                <option value="">Selecione...</option>
-                                {salas.map(s => <option key={s.id} value={s.id}>Sala {s.numero}</option>)}
-                            </select>
-                            <div className="text-danger small">{errors.salaId?.message}</div>
-                        </div>
-                        <div className="row">
-                            <div className="col-6 mb-2">
-                                <label>Data</label>
-                                <input type="date" {...register('data')} className="form-control" />
-                                <div className="text-danger small">{errors.data?.message}</div>
+            {user?.perfil === 'ADMIN' && (
+                <div className="col-md-4 mb-4">
+                    <div className="card p-3 shadow-sm bg-light">
+                        <h5>Agendar Sessão</h5>
+                        <form onSubmit={handleSubmit(onSubmit)}>
+                            <div className="mb-2">
+                                <label>Filme</label>
+                                <select {...register('filmeId')} className="form-select">
+                                    <option value="">Selecione...</option>
+                                    {filmes.map(f => <option key={f.id} value={f.id}>{f.titulo}</option>)}
+                                </select>
+                                <div className="text-danger small">{errors.filmeId?.message}</div>
                             </div>
-                            <div className="col-6 mb-2">
-                                <label>Horário</label>
-                                <input type="time" {...register('horario')} className="form-control" />
-                                <div className="text-danger small">{errors.horario?.message}</div>
+                            <div className="mb-2">
+                                <label>Sala</label>
+                                <select {...register('salaId')} className="form-select">
+                                    <option value="">Selecione...</option>
+                                    {salas.map(s => <option key={s.id} value={s.id}>Sala {s.numero}</option>)}
+                                </select>
+                                <div className="text-danger small">{errors.salaId?.message}</div>
                             </div>
-                        </div>
-                        <div className="mb-2">
-                            <label>Valor Ingresso Inteira (R$)</label>
-                            <input type="number" step="0.01" {...register('valorIngresso', { valueAsNumber: true })} className="form-control" placeholder="20.00" />
-                            <div className="text-danger small">{errors.valorIngresso?.message}</div>
-                        </div>
-                        <div className="d-flex gap-2 mt-3">
-                            <button type="submit" className="btn btn-primary w-100">
-                                {editingSessaoId ? 'Atualizar' : 'Agendar'}
-                            </button>
-                            {editingSessaoId && (
-                                <button type="button" className="btn btn-secondary w-100" onClick={cancelEditSessao}>
-                                    Cancelar
+                            <div className="row">
+                                <div className="col-6 mb-2">
+                                    <label>Data</label>
+                                    <input type="date" {...register('data')} className="form-control" />
+                                    <div className="text-danger small">{errors.data?.message}</div>
+                                </div>
+                                <div className="col-6 mb-2">
+                                    <label>Horário</label>
+                                    <input type="time" {...register('horario')} className="form-control" />
+                                    <div className="text-danger small">{errors.horario?.message}</div>
+                                </div>
+                            </div>
+                            <div className="mb-2">
+                                <label>Valor Ingresso Inteira (R$)</label>
+                                <input type="number" step="0.01" {...register('valorIngresso', { valueAsNumber: true })} className="form-control" placeholder="20.00" />
+                                <div className="text-danger small">{errors.valorIngresso?.message}</div>
+                            </div>
+                            <div className="d-flex gap-2 mt-3">
+                                <button type="submit" className="btn btn-primary w-100">
+                                    {editingSessaoId ? 'Atualizar' : 'Agendar'}
                                 </button>
-                            )}
-                        </div>
-                    </form>
+                                {editingSessaoId && (
+                                    <button type="button" className="btn btn-secondary w-100" onClick={cancelEditSessao}>
+                                        Cancelar
+                                    </button>
+                                )}
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </div>
+            )}
 
-            <div className="col-md-8">
-                <h4>Sessões</h4>
+            <div className={user?.perfil === 'ADMIN' ? "col-md-8" : "col-12"}>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h4 className="mb-0">Sessões</h4>
+                    {filterFilmeId && (
+                        <button className="btn btn-outline-secondary btn-sm" onClick={() => setSearchParams({})}>
+                            Mostrar todas
+                        </button>
+                    )}
+                </div>
                 <table className="table table-hover border">
                     <thead className="table-light">
                         <tr>
@@ -340,7 +369,12 @@ const SessoesManager = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {sessoes.map(s => (
+                        {sessoesExibidas.length === 0 && (
+                            <tr>
+                                <td colSpan={4} className="text-center text-muted py-4">Nenhuma sessão encontrada.</td>
+                            </tr>
+                        )}
+                        {sessoesExibidas.map(s => (
                             <tr key={s.id}>
                                 <td>{s.filme?.titulo}</td>
                                 <td>
@@ -355,18 +389,23 @@ const SessoesManager = () => {
                                 </td>
                                 <td>
                                     <button className="btn btn-sm btn-success me-2" onClick={() => {
+                                        if (!isAuthenticated) { navigate('/login'); return; }
                                         setSessaoSelecionada(s);
                                         setIngressosCarrinho([]);
                                         setLanchesCarrinho([]);
                                     }} title="Vender Ingressos">
-                                        <i className="bi bi-cart"></i>
+                                        <i className="bi bi-cart"></i> Comprar
                                     </button>
-                                    <button className="btn btn-sm btn-warning me-2" onClick={() => handleEditSessao(s)} title="Editar Sessão">
-                                        <i className="bi bi-pencil"></i>
-                                    </button>
-                                    <button className="btn btn-sm btn-danger" onClick={() => removerSessao(s.id)} title="Remover Sessão">
-                                        <i className="bi bi-trash"></i>
-                                    </button>
+                                    {user?.perfil === 'ADMIN' && (
+                                        <>
+                                            <button className="btn btn-sm btn-warning me-2" onClick={() => handleEditSessao(s)} title="Editar Sessão">
+                                                <i className="bi bi-pencil"></i>
+                                            </button>
+                                            <button className="btn btn-sm btn-danger" onClick={() => removerSessao(s.id)} title="Remover Sessão">
+                                                <i className="bi bi-trash"></i>
+                                            </button>
+                                        </>
+                                    )}
                                 </td>
                             </tr>
                         ))}

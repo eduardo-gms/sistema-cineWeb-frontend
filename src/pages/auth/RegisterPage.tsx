@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import api from '../../services/api';
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [error, setError] = useState('');
@@ -16,11 +18,14 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      // 1. Cadastra
+      await api.post('/auth/register', { nome, email, senha });
+      // 2. Faz login automaticamente e vai para home
       await login(email, senha);
       navigate('/');
     } catch (err: any) {
       const msg =
-        err.response?.data?.message || 'Erro ao realizar login. Verifique suas credenciais.';
+        err.response?.data?.message || 'Erro ao realizar cadastro. Tente novamente.';
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -34,9 +39,9 @@ export default function LoginPage() {
           <div className="card-body p-4">
             <div className="text-center mb-4">
               <h3 className="fw-bold">
-                <i className="bi bi-film me-2"></i>CineWeb
+                <i className="bi bi-person-plus me-2"></i>Cadastro
               </h3>
-              <p className="text-muted">Faça login para acessar o sistema</p>
+              <p className="text-muted">Crie sua conta no CineWeb</p>
             </div>
 
             {error && (
@@ -48,27 +53,42 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
-                <label htmlFor="login-email" className="form-label">
+                <label htmlFor="register-nome" className="form-label">
+                  <i className="bi bi-person me-1"></i> Nome Completo
+                </label>
+                <input
+                  id="register-nome"
+                  type="text"
+                  className="form-control form-control-lg"
+                  placeholder="Seu nome"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="mb-3">
+                <label htmlFor="register-email" className="form-label">
                   <i className="bi bi-envelope me-1"></i> E-mail
                 </label>
                 <input
-                  id="login-email"
+                  id="register-email"
                   type="email"
                   className="form-control form-control-lg"
                   placeholder="seu@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  autoFocus
                 />
               </div>
 
               <div className="mb-4">
-                <label htmlFor="login-senha" className="form-label">
+                <label htmlFor="register-senha" className="form-label">
                   <i className="bi bi-lock me-1"></i> Senha
                 </label>
                 <input
-                  id="login-senha"
+                  id="register-senha"
                   type="password"
                   className="form-control form-control-lg"
                   placeholder="••••••"
@@ -80,7 +100,6 @@ export default function LoginPage() {
               </div>
 
               <button
-                id="login-submit-btn"
                 type="submit"
                 className="btn btn-dark btn-lg w-100"
                 disabled={isLoading}
@@ -88,12 +107,12 @@ export default function LoginPage() {
                 {isLoading ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2" role="status" />
-                    Entrando...
+                    Cadastrando...
                   </>
                 ) : (
                   <>
-                    <i className="bi bi-box-arrow-in-right me-2"></i>
-                    Entrar
+                    <i className="bi bi-check-circle me-2"></i>
+                    Cadastrar
                   </>
                 )}
               </button>
@@ -101,11 +120,8 @@ export default function LoginPage() {
 
             <hr className="my-4" />
             <div className="text-center">
-              <Link to="/forgot-password" className="text-decoration-none text-muted small d-block mb-2">
-                <i className="bi bi-question-circle me-1"></i> Esqueceu a senha?
-              </Link>
-              <Link to="/register" className="text-decoration-none text-dark fw-bold small">
-                Ainda não tem conta? Cadastre-se
+              <Link to="/login" className="text-decoration-none text-muted small">
+                Já tem uma conta? <span className="text-dark fw-bold">Entre aqui</span>
               </Link>
             </div>
           </div>

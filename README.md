@@ -34,13 +34,14 @@ O frontend implementa um fluxo de **Access Token em memória** + **Refresh Token
 
 ## Funcionalidades
 
-- ✅ Login/Logout com JWT
-- ✅ Proteção de rotas (PrivateRoute)
+- ✅ Login/Logout com JWT e proteção robusta de rotas
+- ✅ Cadastro e Recuperação de Senha simulada via e-mail
+- ✅ Visualização pública de Filmes e Sessões
+- ✅ Filtros dinâmicos (navegação cruzada Filme ➡️ Sessões)
 - ✅ Navbar dinâmica (nome do usuário + badge de perfil)
-- ✅ CRUD de Filmes, Salas, Sessões, Lanches/Combos
-- ✅ Emissão de comprovante de ingressos
-- ✅ Download de comprovante em PDF (jsPDF)
-- ✅ Impressão de comprovante (window.print)
+- ✅ CRUD de Filmes, Salas, Sessões, Lanches/Combos (exclusivo p/ Admin)
+- ✅ Carrinho e emissão de comprovante de ingressos
+- ✅ Download de comprovante em PDF (jsPDF) e Impressão (window.print)
 
 ---
 
@@ -104,12 +105,14 @@ docker compose up --build
 |------|-----------|------------|
 | `/` | Home | Não |
 | `/login` | LoginPage | Não |
+| `/register` | RegisterPage | Não |
+| `/forgot-password` | ForgotPasswordPage | Não |
 | `/filmes` | FilmesLista | Não |
-| `/filmes/novo` | FilmesForm | Sim |
-| `/filmes/editar/:id` | FilmesForm | Sim |
+| `/filmes/novo` | FilmesForm | Sim (Admin) |
+| `/filmes/editar/:id` | FilmesForm | Sim (Admin) |
 | `/salas` | SalasLista | Não |
-| `/salas/novo` | SalasForm | Sim |
-| `/salas/editar/:id` | SalasForm | Sim |
+| `/salas/novo` | SalasForm | Sim (Admin) |
+| `/salas/editar/:id` | SalasForm | Sim (Admin) |
 | `/sessoes` | SessoesManager | Não |
 | `/lanches` | LancheCombosManager | Não |
 | `/pedidos/:id/comprovante` | ComprovantePage | Sim |

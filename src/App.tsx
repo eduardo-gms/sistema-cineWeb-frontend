@@ -8,7 +8,10 @@ import SalasForm from './pages/salas/SalasForm';
 import SessoesManager from './pages/sessoes/SessoesManager';
 import LancheCombosManager from './pages/lanches/LancheComboManager';
 import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ComprovantePage from './pages/pedidos/ComprovantePage';
+import MeusIngressos from './pages/pedidos/MeusIngressos';
 
 // Componente de rota protegida
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -41,6 +44,8 @@ function AppRoutes() {
 
           {/* Autenticação */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
           {/* Rotas públicas */}
           <Route path="/filmes" element={<FilmesLista />} />
@@ -65,6 +70,9 @@ function AppRoutes() {
           {/* Comprovante */}
           <Route path="/pedidos/:id/comprovante" element={
             <PrivateRoute><ComprovantePage /></PrivateRoute>
+          } />
+          <Route path="/meus-ingressos" element={
+            <PrivateRoute><MeusIngressos /></PrivateRoute>
           } />
         </Routes>
       </div>

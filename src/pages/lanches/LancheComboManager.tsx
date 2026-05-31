@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { getLanches, createLanche, updateLanche, deleteLanche } from '../../services/api';
 import type { LancheCombo } from '../../types';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Schema validado
 const lancheComboSchema = z.object({
@@ -21,6 +23,8 @@ type LancheComboForm = z.infer<typeof lancheComboSchema>;
 const LancheCombosManager = () => {
   const [lanches, setLanches] = useState<LancheCombo[]>([]);
   const [editingId, setEditingId] = useState<number | string | null>(null);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<LancheComboForm>({
     resolver: zodResolver(lancheComboSchema)
@@ -38,6 +42,7 @@ const LancheCombosManager = () => {
   useEffect(() => { carregarLanches(); }, []);
 
   const onSubmit = async (data: LancheComboForm) => {
+    if (!isAuthenticated) { navigate('/login'); return; }
     try {
       const payload: Omit<LancheCombo, 'id'> = {
         ...data
@@ -59,6 +64,7 @@ const LancheCombosManager = () => {
   };
 
   const handleEdit = (lanche: LancheCombo) => {
+    if (!isAuthenticated) { navigate('/login'); return; }
     setEditingId(lanche.id!);
     reset({
       nome: lanche.nome,
@@ -74,6 +80,7 @@ const LancheCombosManager = () => {
   };
 
   const deletarLanche = async (id: string) => {
+    if (!isAuthenticated) { navigate('/login'); return; }
     if (confirm("Confirma a exclusão deste item?")) {
       await deleteLanche(id);
       carregarLanches();

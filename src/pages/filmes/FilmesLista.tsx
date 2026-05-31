@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { getFilmes, deleteFilme } from '../../services/api';
 import type { Filme } from '../../types';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const FilmesLista = () => {
   const [filmes, setFilmes] = useState<Filme[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const carregarFilmes = async () => {
     try {
       setLoading(true);
@@ -23,6 +25,7 @@ const FilmesLista = () => {
   };
 
   useEffect(() => { carregarFilmes(); }, []);
+
 
   const deletarFilme = async (id: string) => {
     if (confirm("Tem certeza?")) {
@@ -43,12 +46,20 @@ const FilmesLista = () => {
     <div>
       <div className="d-flex justify-content-between mb-3">
         <h2>Filmes em Cartaz</h2>
-        <Link to="/filmes/novo" className="btn btn-success"><i className="bi bi-plus-circle"></i> Novo Filme</Link>
+        {user?.perfil === 'ADMIN' && (
+          <Link to="/filmes/novo" className="btn btn-success"><i className="bi bi-plus-circle"></i> Novo Filme</Link>
+        )}
       </div>
       <div className="row">
         {filmes.map(filme => (
           <div key={filme.id} className="col-md-4 mb-3">
-            <div className="card h-100">
+            <div 
+              className="card h-100" 
+              style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
+              onClick={() => navigate(`/sessoes?filmeId=${filme.id}`)}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
               <div className="card-body">
                 <h5 className="card-title">{filme.titulo}</h5>
                 <h6 className="card-subtitle mb-2 text-muted">{filme.genero?.nome || filme.generoId} | {filme.duracao} min</h6>
@@ -60,12 +71,16 @@ const FilmesLista = () => {
                 <p className="card-text"><small className="text-muted">
                   Exibição: {new Date(filme.dataInicioExibicao).toLocaleDateString()} até {new Date(filme.dataFimExibicao).toLocaleDateString()}
                 </small></p>
-                <Link to={`/filmes/editar/${filme.id}`} className="btn btn-warning btn-sm me-2">
-                  <i className="bi bi-pencil"></i> Editar
-                </Link>
-                <button onClick={() => deletarFilme(filme.id)} className="btn btn-danger btn-sm">
-                  <i className="bi bi-trash"></i> Excluir
-                </button>
+                {user?.perfil === 'ADMIN' && (
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Link to={`/filmes/editar/${filme.id}`} className="btn btn-warning btn-sm me-2">
+                      <i className="bi bi-pencil"></i> Editar
+                    </Link>
+                    <button onClick={() => deletarFilme(filme.id)} className="btn btn-danger btn-sm">
+                      <i className="bi bi-trash"></i> Excluir
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

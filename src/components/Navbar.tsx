@@ -24,14 +24,25 @@ const Navbar = () => {
               <Link className="nav-link" to="/filmes">Filmes</Link>
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/salas">Salas</Link>
-            </li>
-            <li className="nav-item">
               <Link className="nav-link" to="/sessoes">Sessões</Link>
             </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/lanches">Lanches & Combos</Link>
-            </li>
+            {user?.perfil === 'ADMIN' && (
+              <>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/salas">Salas</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/lanches">Lanches & Combos</Link>
+                </li>
+              </>
+            )}
+            {isAuthenticated && (
+              <li className="nav-item">
+                <Link className="nav-link text-warning fw-bold" to="/meus-ingressos">
+                  <i className="bi bi-ticket-perforated me-1"></i> Meus Ingressos
+                </Link>
+              </li>
+            )}
           </ul>
           <div className="d-flex align-items-center">
             {isAuthenticated ? (

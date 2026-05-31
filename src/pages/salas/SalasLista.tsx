@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { getSalas, deleteSala } from '../../services/api';
 import { type Sala } from '../../types';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const SalasLista = () => {
   const [salas, setSalas] = useState<Sala[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const carregarSalas = async () => {
     try {
@@ -20,6 +23,14 @@ const SalasLista = () => {
   };
 
   useEffect(() => { carregarSalas(); }, []);
+
+  const requireAuth = (callback: () => void) => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    callback();
+  };
 
   const deletarSala = async (id: string) => {
     if (confirm("Tem certeza que deseja excluir esta sala?")) {
@@ -38,9 +49,15 @@ const SalasLista = () => {
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Gerenciamento de Salas</h2>
-        <Link to="/salas/novo" className="btn btn-success">
-          <i className="bi bi-plus-circle me-2"></i>Nova Sala
-        </Link>
+        {isAuthenticated ? (
+          <Link to="/salas/novo" className="btn btn-success">
+            <i className="bi bi-plus-circle me-2"></i>Nova Sala
+          </Link>
+        ) : (
+          <button onClick={() => navigate('/login')} className="btn btn-success">
+            <i className="bi bi-plus-circle me-2"></i>Nova Sala
+          </button>
+        )}
       </div>
 
       {salas.length === 0 ? (
@@ -61,11 +78,17 @@ const SalasLista = () => {
                   <td className="align-middle fw-bold">Sala {sala.numero}</td>
                   <td className="align-middle">{sala.capacidade} lugares</td>
                   <td className="text-end">
-                    <Link to={`/salas/editar/${sala.id}`} className="btn btn-warning btn-sm me-2" title="Editar Sala">
-                      <i className="bi bi-pencil"></i> Editar
-                    </Link>
+                    {isAuthenticated ? (
+                      <Link to={`/salas/editar/${sala.id}`} className="btn btn-warning btn-sm me-2" title="Editar Sala">
+                        <i className="bi bi-pencil"></i> Editar
+                      </Link>
+                    ) : (
+                      <button onClick={() => navigate('/login')} className="btn btn-warning btn-sm me-2" title="Editar Sala">
+                        <i className="bi bi-pencil"></i> Editar
+                      </button>
+                    )}
                     <button
-                      onClick={() => deletarSala(sala.id)}
+                      onClick={() => requireAuth(() => deletarSala(sala.id))}
                       className="btn btn-danger btn-sm"
                       title="Excluir Sala"
                     >
