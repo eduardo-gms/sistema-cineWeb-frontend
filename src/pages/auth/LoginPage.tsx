@@ -16,7 +16,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(email, senha);
+      await login(email.trim(), senha);
       navigate('/');
     } catch (err: any) {
       const msg =
