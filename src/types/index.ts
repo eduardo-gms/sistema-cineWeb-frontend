@@ -61,6 +61,7 @@ export interface Pedido {
     dataHora?: string;
     ingressos?: IngressoItem[];
     lanches?: LancheItem[];
+    usuario?: Usuario;
 }
 
 // Interfaces auxiliares para manipulação de Front-end (ex: Carrinho)

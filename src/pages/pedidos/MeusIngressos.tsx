@@ -64,7 +64,7 @@ export default function MeusIngressos() {
                         Pedido #{String(pedido.id).substring(0, 8)}
                       </h5>
                       <span className="badge bg-dark">
-                        {new Date(pedido.criadoEm || '').toLocaleDateString()}
+                        {new Date(pedido.dataHora || '').toLocaleDateString()}
                       </span>
                     </div>
 
